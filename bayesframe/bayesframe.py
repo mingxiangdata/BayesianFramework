@@ -13,7 +13,7 @@ class BayesFrame:
                  val_scheme=None,
                  bic_scheme=None,
                  model_scheme=['selection']):
-        
+
         lin = LinZoo(fpath=fpath, df=df, target=target, 
                      val_scheme=val_scheme, bic_scheme=bic_scheme)
         lin.build_zoo()
@@ -66,7 +66,7 @@ class BayesFrame:
             out_df.to_csv(fpath)
         else:
             out_df.to_csv(outpath)
-        
+
         if print_rmse and target:
             print('Computed RMSE: {}'.format(np.sqrt(mean_squared_error(
                 out_df['Epred'].to_numpy(), out_df[target].to_numpy()))))

@@ -33,22 +33,20 @@ class LinReg:
     def compute_RMSE(self):
         if self.val_scheme is None:
             return np.sqrt(mean_squared_error(self.lr.predict(self.X), self.y))
+        if self.val_scheme == 'leave_one_out':
+            locv = LeaveOneOut()
+        elif 'Fold' in self.val_scheme:
+            k = int(self.val_scheme.split('-')[0])
+            locv = KFold(n_splits=k)
         else:
-            if self.val_scheme == 'leave_one_out':
-                locv = LeaveOneOut()
-            elif 'Fold' in self.val_scheme:
-                k = int(self.val_scheme.split('-')[0])
-                locv = KFold(n_splits=k)
-            else:
-                msg = 'Invalid value encountered for validation scheme.'
-                raise ValueError(msg)
+            raise ValueError('Invalid value encountered for validation scheme.')
 
-            y_true = []
-            y_pred = []
-            for tr_id, ts_id in locv.split(self.y):
-                XTR, XTS, YTR = self.X[tr_id], self.X[ts_id], self.y[tr_id]
-                y_true.extend(self.y[ts_id])
-                y_pred.extend(LinearRegression().fit(XTR, YTR).predict(XTS))
-            return np.sqrt(mean_squared_error(y_true, y_pred))
+        y_true = []
+        y_pred = []
+        for tr_id, ts_id in locv.split(self.y):
+            XTR, XTS, YTR = self.X[tr_id], self.X[ts_id], self.y[tr_id]
+            y_true.extend(self.y[ts_id])
+            y_pred.extend(LinearRegression().fit(XTR, YTR).predict(XTS))
+        return np.sqrt(mean_squared_error(y_true, y_pred))
     
 

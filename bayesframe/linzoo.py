@@ -13,15 +13,11 @@ class LinZoo:
                  target=None,
                  val_scheme=None,
                  bic_scheme='per_n'):
-        if fpath:
-            self.df = pd.read_csv(fpath, encoding="utf-8")
-        else:
-            self.df = df
+        self.df = pd.read_csv(fpath, encoding="utf-8") if fpath else df
         self.target = [target]
         self.val_scheme = val_scheme
         self.bic_scheme = bic_scheme
-        self.descriptors = list([i for i in self.df.columns 
-            if i != target])
+        self.descriptors = [i for i in self.df.columns if i != target]
 
     def build_zoo(self):
         self.zoo = {}
@@ -33,20 +29,16 @@ class LinZoo:
                     y =y.reshape(-1)
                 lin = LinReg(X=X, y=y, val_scheme=self.val_scheme)
                 self.zoo['_'.join(des_comb)] = lin.get_model_data()
-       
-        rmse_min = min([value['rmse'] for value in self.zoo.values()])
+
+        rmse_min = min(value['rmse'] for value in self.zoo.values())
         for key, value in self.zoo.items():
             rmse = value['rmse']
             n = value['n_dp']
             k = len(value['slope']) + 1
             bic = n * np.log((rmse/rmse_min)**2) + k * np.log(n)
-            
-            if self.bic_scheme == 'per_n':
-                self.zoo[key]['BIC'] = bic / n
-            else:
-                self.zoo[key]['BIC'] = bic
-        
-        bic_min = min([value['BIC'] for value in self.zoo.values()])
+
+            self.zoo[key]['BIC'] = bic / n if self.bic_scheme == 'per_n' else bic
+        bic_min = min(value['BIC'] for value in self.zoo.values())
         for key, value in self.zoo.items():
             self.zoo[key]['Delta_BIC'] = value['BIC'] - bic_min
     
@@ -64,10 +56,11 @@ class LinZoo:
         plt.ylabel("BIC", fontsize=14)
         data = [(len(v['slope'])+1, v['BIC']) for v in self.zoo.values()]
         plt.scatter(*zip(*data), color="green", s=40)
-        min_data = []
-        for ndes in range(2, len(self.descriptors) + 2):
-            min_data.append(min([i for i in data if i[0]==ndes], 
-                    key=lambda x: x[1]))
+        min_data = [
+            min((i for i in data if i[0] == ndes), key=lambda x: x[1])
+            for ndes in range(2, len(self.descriptors) + 2)
+        ]
+
         plt.plot(*zip(*min_data), color="blue", linewidth=3)
         min_min_data = min(min_data, key=lambda x: x[1])
         plt.xticks([i[0] for i in min_data])
